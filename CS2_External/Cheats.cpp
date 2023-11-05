@@ -56,25 +56,49 @@ void Cheats::Menu()
 			if (ImGui::Button(ICON_FA_EYE, ImVec2(100, 35))) {
 				tabb = 0;
 			}
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			{
+				ImGui::SetTooltip(u8"看穿墙壁！ （左键单击框和骨骼进行可见性检查）");
+			}
 			ImGui::Spacing();
 			if (ImGui::Button(ICON_FA_USER_CIRCLE, ImVec2(100, 35))) {
 				tabb = 1;
+			}
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			{
+				ImGui::SetTooltip(u8"锁定人");
 			}
 			ImGui::Spacing();
 			if (ImGui::Button(ICON_FA_FILE_CODE, ImVec2(100, 35))) {
 				tabb = 2;
 			}
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			{
+				ImGui::SetTooltip(u8"对于没有位置的设置");
+			}
 			ImGui::Spacing();
 			if (ImGui::Button(ICON_FA_HAND_POINTER, ImVec2(100, 35))) {
 				tabb = 3;
+			}
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			{
+				ImGui::SetTooltip(u8"懒得点击？");
 			}
 			ImGui::Spacing();
 			if (ImGui::Button(ICON_FA_FOLDER_OPEN, ImVec2(100, 35))) {
 				tabb = 4;
 			}
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			{
+				ImGui::SetTooltip(u8"保存您的设置");
+			}
 			ImGui::Spacing();
 			if (ImGui::Button(ICON_FA_SUN, ImVec2(100, 35))) {
 				tabb = 5;
+			}
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			{
+				ImGui::SetTooltip(u8"菜单和游戏设置");
 			}
 		}
 		ImGui::EndChild();
@@ -104,6 +128,21 @@ void Cheats::Menu()
 				ImGui::SameLine();
 				ImGui::SetNextItemWidth(110);
 				ImGui::Combo(u8"方框类型", &MenuConfig::BoxType, u8"固定\0动态");
+
+				ImGui::Checkbox(u8"填充框", &MenuConfig::FilledBox);
+				if (ImGui::IsItemClicked(1))
+				{
+					ImGui::OpenPopup("##Filledboxvis");
+				}
+				if (ImGui::BeginPopup("##Filledboxvis")) {
+					ImGui::TextUnformatted(u8"设置");
+					ImGui::Checkbox(u8"填充掩体识别", &MenuConfig::FilledVisBox);
+					ImGui::SameLine();
+					ImGui::ColorEdit4("##FilledBoxVisColor", reinterpret_cast<float*>(&MenuConfig::BoxFilledVisColor), ImGuiColorEditFlags_NoInputs);
+					ImGui::EndPopup();
+				}
+				ImGui::SameLine();
+				ImGui::ColorEdit4("##FilledBoxColor", reinterpret_cast<float*>(&MenuConfig::BoxFilledColor), ImGuiColorEditFlags_NoInputs);
 
 				ImGui::Checkbox(u8"血条", &MenuConfig::ShowHealthBar);
 				ImGui::SameLine();
@@ -207,6 +246,14 @@ void Cheats::Menu()
 						ImGui::GetWindowDrawList()->AddRect(rectStartPos, rectEndPos, IM_COL32(0, 0, 0, 255), 0.0f, ImDrawCornerFlags_All, 2.0f);//outline
 						ImGui::GetWindowDrawList()->AddRect(rectStartPos, rectEndPos, boxColor, 0.0f, ImDrawCornerFlags_All, 1.0f); // mainrec
 					}
+
+					if (MenuConfig::FilledBox) {
+						ImU32 boxFilledColor = MenuConfig::BoxFilledColor;
+						ImVec2 rectStartPos = centerPos;
+						ImVec2 rectEndPos(rectStartPos.x + rectSize.x, rectStartPos.y + rectSize.y);
+						ImGui::GetWindowDrawList()->AddRectFilled(rectStartPos, rectEndPos, boxFilledColor, 0.0f, ImDrawCornerFlags_All); // mainrec
+					}
+
 					if (MenuConfig::ShowEyeRay) {
 						ImU32 EyeC = MenuConfig::EyeRayColor;
 						ImVec2 lineStart(centerPos.x + 50, centerPos.y + 15);
@@ -292,18 +339,19 @@ void Cheats::Menu()
 			else if (tabb == 1) {
 				//aimbot
 				ImGui::SeparatorText(u8"自动瞄准");
+				ImGui::SeparatorText(u8"目前正在重做中，目前已经搞砸了");
 
 				ImGui::Checkbox(u8"自动瞄准", &MenuConfig::AimBot);
 				ImGui::SameLine();
 				HotKey(&AimControl::HotKey, ImVec2(95, 28));
 
-				if (ImGui::Combo(u8"自瞄键", &MenuConfig::AimBotHotKey, "MENU\0RBUTTON\0XBUTTON1\0XBUTTON2\0CAPITAL\0SHIFT\0CONTROL"))
+				if (ImGui::Combo(u8"自瞄键", &MenuConfig::AimBotHotKey, "MENU\0LBUTTON\0RBUTTON\0XBUTTON1\0XBUTTON2\0CAPITAL\0SHIFT\0CONTROL"))
 				{
 					AimControl::SetHotKey(MenuConfig::AimBotHotKey);
 				}
 
 				float FovMin = 0.1f, FovMax = 89.f;
-				float SmoothMin = 0.1f, SmoothMax = 1.f;
+				float SmoothMin = 0.0f, SmoothMax = 1.f;
 				Gui.SliderScalarEx1(u8"自瞄范围", ImGuiDataType_Float, &AimControl::AimFov, &FovMin, &FovMax, "%.1f", ImGuiSliderFlags_None);
 				ImGui::Checkbox(u8"绘制范围圈", &MenuConfig::ShowAimFovRange);
 				ImGui::SameLine();
@@ -389,38 +437,38 @@ void Cheats::Menu()
 				Gui.SliderScalarEx1(u8"最短延迟", ImGuiDataType_U32, &TriggerBot::MinDelay, &MinTriggerDelayMin, &MinTriggerDelayMax, "%d", ImGuiSliderFlags_None);
 				Gui.SliderScalarEx1(u8"最大延迟", ImGuiDataType_U32, &TriggerBot::MaxDelay, &MaxTriggerDelayMin, &MaxTriggerDelayMax, "%d", ImGuiSliderFlags_None);
 				ImGui::Text(u8"[INSERT] 隐藏菜单");
-			}
+				}
 			else if (tabb == 4) {
-				//config
-				ConfigMenu::RenderConfigMenu();
-				ImGui::Text(u8"[INSERT] 隐藏菜单");
-			}
+					//config
+					ConfigMenu::RenderConfigMenu();
+					ImGui::Text(u8"[INSERT] 隐藏菜单");
+					}
 			else if (tabb == 5) {
-				ImGui::SeparatorText(u8"设置");
-				ImGui::Combo(u8"选择风格", &MenuConfig::selectedStyleIndex, u8"紫色\0未来暗\0桃色\0");
-				switch (MenuConfig::selectedStyleIndex) {
-				case 0:
-					MenuConfig::styleee = 1;
-					break;
-				case 1:
-					MenuConfig::styleee = 2;
-					break;
-				case 2:
-					MenuConfig::styleee = 3;
-					break;
-				}
-				ImGui::Checkbox(u8"不绘制队友", &MenuConfig::TeamCheck);
-				ImGui::SameLine();
-				ImGui::Checkbox(u8"防录屏", &MenuConfig::OBSBypass);
-				ImGui::SameLine();
-				ImGui::Checkbox(u8"观战绘制", &MenuConfig::SpectateEsp);
-				if (ImGui::Button(u8"作者Discord")) {
-					std::system("cmd.exe /c start https://discord.gg/2b66kqG2nK");
-				}
-				if (ImGui::Button(u8"联系zh翻译")) {
-					std::system("cmd.exe /c start https://wpa.qq.com/msgrd?v=3&uin=2915372048&site=qq&menu=yes&jumpflag=1");
-				}
-				ImGui::Text(u8"[INSERT] 隐藏菜单");
+						ImGui::SeparatorText(u8"设置");
+						ImGui::Combo(u8"选择风格", &MenuConfig::selectedStyleIndex, u8"紫色\0未来暗\0桃色\0");
+						switch (MenuConfig::selectedStyleIndex) {
+						case 0:
+							MenuConfig::styleee = 1;
+							break;
+						case 1:
+							MenuConfig::styleee = 2;
+							break;
+						case 2:
+							MenuConfig::styleee = 3;
+							break;
+						}
+						ImGui::Checkbox(u8"不绘制队友", &MenuConfig::TeamCheck);
+						ImGui::SameLine();
+						ImGui::Checkbox(u8"防录屏", &MenuConfig::OBSBypass);
+						ImGui::SameLine();
+						ImGui::Checkbox(u8"观战绘制", &MenuConfig::SpectateEsp);
+						if (ImGui::Button(u8"作者Discord")) {
+							std::system("cmd.exe /c start https://discord.gg/2b66kqG2nK");
+						}
+						if (ImGui::Button(u8"联系zh翻译")) {
+							std::system("cmd.exe /c start https://wpa.qq.com/msgrd?v=3&uin=2915372048&site=qq&menu=yes&jumpflag=1");
+						}
+						ImGui::Text(u8"[INSERT] 隐藏菜单");
 			}
 		}
 
@@ -556,14 +604,12 @@ void Cheats::Run()
 		DistanceToSight = Entity.GetBone().BonePosList[BONEINDEX::head].ScreenPos.DistanceTo({ Gui.Window.Size.x / 2,Gui.Window.Size.y / 2 });
 
 
-		if (DistanceToSight < MaxAimDistance)
-		{
+		if (DistanceToSight < MaxAimDistance) {
 			MaxAimDistance = DistanceToSight;
-			// From: https://github.com/redbg/CS2-Internal/blob/fc8e64430176a62f8800b7467884806708a865bb/src/include/Cheats.hpp#L129
+
 			if (!MenuConfig::VisibleCheck ||
 				Entity.Pawn.bSpottedByMask & (DWORD64(1) << (LocalPlayerControllerIndex)) ||
-				LocalEntity.Pawn.bSpottedByMask & (DWORD64(1) << (i)))
-			{
+				LocalEntity.Pawn.bSpottedByMask & (DWORD64(1) << (i))) {
 				AimPos = Entity.GetBone().BonePosList[MenuConfig::AimPositionIndex].Pos;
 				if (MenuConfig::AimPositionIndex == BONEINDEX::head)
 					AimPos.z -= 1.f;
@@ -588,9 +634,6 @@ void Cheats::Run()
 				Render::DrawBone(Entity, MenuConfig::BoneColor, 1.3);
 			}
 		}
-
-
-
 
 
 		// Draw eyeRay
@@ -629,6 +672,23 @@ void Cheats::Run()
 			}
 			else {
 				Gui.Rectangle({ Rect.x, Rect.y }, { Rect.z, Rect.w }, MenuConfig::BoxColor, 1.3);
+			}
+		}
+
+		// Filled Box
+		if (MenuConfig::FilledBox) {
+			if (MenuConfig::FilledVisBox) {
+				if ((Entity.Pawn.bSpottedByMask & (DWORD64(1) << LocalPlayerControllerIndex)) ||
+					(LocalEntity.Pawn.bSpottedByMask & (DWORD64(1) << i))) {
+
+					Gui.RectangleFilled({ Rect.x, Rect.y }, { Rect.z, Rect.w }, MenuConfig::BoxFilledVisColor);
+				}
+				else {
+					Gui.RectangleFilled({ Rect.x, Rect.y }, { Rect.z, Rect.w }, MenuConfig::BoxFilledColor);
+				}
+			}
+			else {
+				Gui.RectangleFilled({ Rect.x, Rect.y }, { Rect.z, Rect.w }, MenuConfig::BoxFilledColor);
 			}
 		}
 
@@ -707,8 +767,6 @@ void Cheats::Run()
 	if (MenuConfig::ShowCrossHair) {
 		RenderCrossHair(ImGui::GetBackgroundDrawList());
 	}
-
-
 
 	// TriggerBot
 	if (MenuConfig::TriggerBot && GetAsyncKeyState(TriggerBot::HotKey))

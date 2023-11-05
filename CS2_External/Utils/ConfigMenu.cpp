@@ -26,18 +26,7 @@ namespace ConfigMenu {
 
 		static int selectedConfig = -1;
 
-		TCHAR documentsPath[MAX_PATH];
-		if (SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, 0, documentsPath) != S_OK) {
-			return;
-		}
-
-		char narrowPath[MAX_PATH];
-		if (WideCharToMultiByte(CP_UTF8, 0, documentsPath, -1, narrowPath, sizeof(narrowPath), NULL, NULL) == 0) {
-			return;
-		}
-
-		std::string documentsDir(narrowPath);
-		std::string configFilePath = documentsDir + "\\.Aeonix\\";
+		const std::string configFilePath = MenuConfig::path;
 		static std::vector<std::string> configFiles;
 
 		configFiles.clear();
@@ -67,7 +56,7 @@ namespace ConfigMenu {
 			std::string selectedConfigFile = configFiles[selectedConfig];
 			MyConfigSaver::LoadConfig(selectedConfigFile);
 		}
-		
+
 		ImGui::SameLine();
 
 		if (ImGui::Button(u8"保存已选") && selectedConfig >= 0 && selectedConfig < configFiles.size())
@@ -102,7 +91,7 @@ namespace ConfigMenu {
 			if (ImGui::Button(u8"确定", { 45.0f, 0.0f }))
 			{
 				std::string selectedConfigFile = configFiles[selectedConfig];
-				std::string fullPath = configFilePath + "/" + selectedConfigFile;
+				std::string fullPath = configFilePath + "\\" + selectedConfigFile;
 				if (std::remove(fullPath.c_str()) == 0)
 				{
 					configFiles.erase(configFiles.begin() + selectedConfig);

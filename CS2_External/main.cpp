@@ -5,34 +5,38 @@
 #include <iomanip>
 #include <Shlobj.h>
 #include <filesystem>
+#include <KnownFolders.h>
 #include <Windows.h>
 
 int main()
 {
+	namespace fs = std::filesystem;
 
 	auto ProcessStatus = ProcessMgr.Attach("cs2.exe");
 
-	TCHAR documentsPath[MAX_PATH];
-	if (SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, 0, documentsPath) != S_OK) {
-		return 0;
+	char documentsPath[MAX_PATH];
+	if (SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, documentsPath) != S_OK) {
+		std::cerr << "[Error] 无法获取文档路径。" << std::endl;
+		goto END;
 	}
-	char narrowPath[MAX_PATH];
-	if (WideCharToMultiByte(CP_UTF8, 0, documentsPath, -1, narrowPath, sizeof(narrowPath), NULL, NULL) == 0) {
-		return 0;
-	}
-	std::string documentsDir(narrowPath);
-	std::string configFilePath = documentsDir + "\\.Aeonix\\";
-	namespace fs = std::filesystem;
-	if (!fs::is_directory(configFilePath)) {
-		if (fs::create_directory(configFilePath)) {
-			std::cout << "[Success] 配置目录已创建:：" << configFilePath << std::endl;
+
+	MenuConfig::path = documentsPath;
+	MenuConfig::path += "\\.Aeonix";
+
+	if (!fs::is_directory(MenuConfig::path)) {
+
+		if (fs::create_directory(MenuConfig::path)) {
+
+			std::cout << "[Success] 创建的配置目录：" << MenuConfig::path << std::endl;
 		}
 		else {
+
 			std::cerr << "[Error] 无法创建配置目录。" << std::endl;
 		}
 	}
 	else {
-		std::cout << "[Success] 配置目录已存在：" << configFilePath << std::endl;
+
+		std::cout << "[Success] 配置目录已经存在：" << MenuConfig::path << std::endl;
 	}
 
 	

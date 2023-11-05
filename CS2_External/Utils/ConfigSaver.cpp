@@ -11,25 +11,11 @@
 
 namespace MyConfigSaver {
 
+    // Function to save the configuration to a file
     void SaveConfig(const std::string& filename) {
-        TCHAR documentsPath[MAX_PATH];
-        if (SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, 0, documentsPath) != S_OK) {
-            std::cerr << "错误：无法检索文档目录路径。" << std::endl;
-            return;
-        }
-
-        char narrowPath[MAX_PATH];
-        if (WideCharToMultiByte(CP_UTF8, 0, documentsPath, -1, narrowPath, sizeof(narrowPath), NULL, NULL) == 0) {
-            std::cerr << "错误：无法将宽字符路径转换为窄字符路径。" << std::endl;
-            return;
-        }
-
-        std::string documentsDir(narrowPath);
-        std::string configFilePath = documentsDir + "\\.Aeonix\\" + filename;
-
-        std::ofstream configFile(configFilePath);
+        std::ofstream configFile(MenuConfig::path + '\\' + filename);
         if (!configFile.is_open()) {
-            std::cerr << "错误：无法打开配置文件。" << std::endl;
+            std::cerr << "[Error] 无法打开配置文件。" << std::endl;
             return;
         }
 
@@ -92,6 +78,8 @@ namespace MyConfigSaver {
         configFile << "ShowAimFovRange " << MenuConfig::ShowAimFovRange << std::endl;
         configFile << "AimFovRangeColor " << MenuConfig::AimFovRangeColor.Value.x << " " << MenuConfig::AimFovRangeColor.Value.y << " " << MenuConfig::AimFovRangeColor.Value.z << " " << MenuConfig::AimFovRangeColor.Value.w << std::endl;
         configFile << "VisibleColor " << MenuConfig::VisibleColor.Value.x << " " << MenuConfig::VisibleColor.Value.y << " " << MenuConfig::VisibleColor.Value.z << " " << MenuConfig::VisibleColor.Value.w << std::endl;
+        configFile << "BoxFilledColor " << MenuConfig::BoxFilledColor.Value.x << " " << MenuConfig::BoxFilledColor.Value.y << " " << MenuConfig::BoxFilledColor.Value.z << " " << MenuConfig::BoxFilledColor.Value.w << std::endl;
+        configFile << "BoxFilledVisColor " << MenuConfig::BoxFilledVisColor.Value.x << " " << MenuConfig::BoxFilledVisColor.Value.y << " " << MenuConfig::BoxFilledVisColor.Value.z << " " << MenuConfig::BoxFilledVisColor.Value.w << std::endl;
         configFile << "OBSBypass " << MenuConfig::OBSBypass << std::endl;
         configFile << "ShowDistance " << MenuConfig::ShowDistance << std::endl;
         configFile << "RadarBgAlpha " << MenuConfig::RadarBgAlpha << std::endl;
@@ -103,30 +91,17 @@ namespace MyConfigSaver {
         configFile << "watermarkfps " << MenuConfig::watermarkfps << std::endl;
         configFile << "watermarktime " << MenuConfig::watermarktime << std::endl;
         configFile << "watermarkuser " << MenuConfig::watermarkuser << std::endl;
-        configFile << "CheatList" << MenuConfig::CheatList << std::endl;
+        configFile << "CheatList " << MenuConfig::CheatList << std::endl;
+        configFile << "FilledBox " << MenuConfig::FilledBox << std::endl;
+        configFile << "FilledVisBox " << MenuConfig::FilledVisBox << std::endl;
         configFile.close();
-        std::cout << "配置保存到" << filename << std::endl;
+        std::cout << "[Success] 配置保存到 " << MenuConfig::path + '\\' + filename << std::endl;
     }
 
-    void LoadConfig(const std::string& filename) {
-        TCHAR documentsPath[MAX_PATH];
-        if (SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, 0, documentsPath) != S_OK) {
-            std::cerr << "错误：无法检索文档目录路径。" << std::endl;
-            return;
-        }
-
-        char narrowPath[MAX_PATH];
-        if (WideCharToMultiByte(CP_UTF8, 0, documentsPath, -1, narrowPath, sizeof(narrowPath), NULL, NULL) == 0) {
-            std::cerr << "错误：无法将宽字符路径转换为窄字符路径。" << std::endl;
-            return;
-        }
-
-        std::string documentsDir(narrowPath);
-        std::string configFilePath = documentsDir + "\\.Aeonix\\" + filename;
-
-        std::ifstream configFile(configFilePath);
+    void LoadConfig(const std::string& loadfilename) {
+        std::ifstream configFile(MenuConfig::path + '\\' + loadfilename);
         if (!configFile.is_open()) {
-            std::cerr << "错误：无法打开配置文件。" << std::endl;
+            std::cerr << "[Error] 无法打开配置文件。" << std::endl;
             return;
         }
 
@@ -135,6 +110,9 @@ namespace MyConfigSaver {
             std::istringstream iss(line);
             std::string key;
             if (iss >> key) {
+                //std::cout << "Key: " << key << std::endl; // Debug output
+                //if (iss >> key) {
+                    //std::cout << "Value: " << key << std::endl; // Debug output
                 if (key == "ShowBoneESP") iss >> MenuConfig::ShowBoneESP;
                 else if (key == "VisibleEsp") iss >> MenuConfig::VisibleEsp;
                 else if (key == "HealthText") iss >> MenuConfig::HealthText;
@@ -193,6 +171,8 @@ namespace MyConfigSaver {
                 else if (key == "ShowAimFovRange") iss >> MenuConfig::ShowAimFovRange;
                 else if (key == "AimFovRangeColor") iss >> MenuConfig::AimFovRangeColor.Value.x >> MenuConfig::AimFovRangeColor.Value.y >> MenuConfig::AimFovRangeColor.Value.z >> MenuConfig::AimFovRangeColor.Value.w;
                 else if (key == "VisibleColor") iss >> MenuConfig::VisibleColor.Value.x >> MenuConfig::VisibleColor.Value.y >> MenuConfig::VisibleColor.Value.z >> MenuConfig::VisibleColor.Value.w;
+                else if (key == "BoxFilledColor") iss >> MenuConfig::BoxFilledColor.Value.x >> MenuConfig::BoxFilledColor.Value.y >> MenuConfig::BoxFilledColor.Value.z >> MenuConfig::BoxFilledColor.Value.w;
+                else if (key == "BoxFilledVisColor") iss >> MenuConfig::BoxFilledVisColor.Value.x >> MenuConfig::BoxFilledVisColor.Value.y >> MenuConfig::BoxFilledVisColor.Value.z >> MenuConfig::BoxFilledVisColor.Value.w;
                 else if (key == "OBSBypass") iss >> MenuConfig::OBSBypass;
                 else if (key == "ShowDistance") iss >> MenuConfig::ShowDistance;
                 else if (key == "RadarBgAlpha") iss >> MenuConfig::RadarBgAlpha;
@@ -204,10 +184,12 @@ namespace MyConfigSaver {
                 else if (key == "watermarktime") iss >> MenuConfig::watermarktime;
                 else if (key == "watermarkuser") iss >> MenuConfig::watermarkuser;
                 else if (key == "CheatList") iss >> MenuConfig::CheatList;
+                else if (key == "FilledBox") iss >> MenuConfig::FilledBox;
+                else if (key == "FilledVisBox") iss >> MenuConfig::FilledVisBox;
+                //}
             }
         }
-
         configFile.close();
-        std::cout << "配置加载自" << filename << std::endl;
+        std::cout << "[Success] 配置加载自 " << MenuConfig::path + '\\' + loadfilename << std::endl;
     }
-} // namespace ConfigSaver
+}// namespace ConfigSaver
